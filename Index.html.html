@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DreamForge — Free AI Image & Video Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060d;--panel:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);
+  --text:#ecebf5;--mute:#9a98b0;--a1:#8b5cf6;--a2:#ec4899;--a3:#22d3ee;
+  --grad:linear-gradient(120deg,var(--a1),var(--a2) 55%,#f59e0b);
+  --r:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100%}
+body{overflow-x:hidden}
+.aurora{position:fixed;inset:-20%;z-index:-1;filter:blur(90px);opacity:.55;pointer-events:none}
+.aurora i{position:absolute;border-radius:50%;animation:float 18s ease-in-out infinite alternate}
+.aurora i:nth-child(1){width:45vw;height:45vw;background:#5b21b6;left:5%;top:5%}
+.aurora i:nth-child(2){width:38vw;height:38vw;background:#be185d;right:5%;top:20%;animation-delay:-6s}
+.aurora i:nth-child(3){width:35vw;height:35vw;background:#0e7490;left:30%;bottom:0;animation-delay:-12s}
+@keyframes float{to{transform:translate(6vw,-5vh) scale(1.15)}}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 80px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.logo{font-family:'Space Grotesk';font-weight:700;font-size:26px;letter-spacing:-.5px}
+.logo span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.badge{font-size:12px;color:#a7f3d0;border:1px solid rgba(167,243,208,.3);padding:5px 10px;border-radius:99px;background:rgba(16,185,129,.08)}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);padding:5px;border-radius:14px;margin-bottom:18px;overflow-x:auto}
+.tab{flex:1;min-width:max-content;border:0;background:none;color:var(--mute);font:600 14px Inter;padding:11px 14px;border-radius:10px;cursor:pointer;transition:.2s}
+.tab.on{background:rgba(255,255,255,.09);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:18px}
+@media(max-width:880px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+h2{font:600 15px 'Space Grotesk';margin-bottom:12px;letter-spacing:.2px}
+label{display:block;font-size:12px;color:var(--mute);margin:14px 0 6px;font-weight:500;text-transform:uppercase;letter-spacing:.6px}
+textarea,input,select{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:12px;font:15px Inter;outline:none;transition:.2s}
+textarea{min-height:110px;resize:vertical;line-height:1.45}
+textarea:focus,input:focus,select:focus{border-color:rgba(139,92,246,.7);box-shadow:0 0 0 3px rgba(139,92,246,.18)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--mute);padding:7px 11px;border-radius:99px;font:500 13px Inter;cursor:pointer;transition:.15s}
+.chip.on{color:#fff;border-color:transparent;background:linear-gradient(120deg,rgba(139,92,246,.5),rgba(236,72,153,.5))}
+.btn{width:100%;margin-top:18px;border:0;border-radius:14px;padding:15px;font:700 16px 'Space Grotesk';color:#fff;background:var(--grad);cursor:pointer;position:relative;overflow:hidden;box-shadow:0 10px 30px -10px rgba(236,72,153,.6);transition:transform .15s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.35),transparent 70%);transform:translateX(-100%);animation:shine 3.2s infinite}
+@keyframes shine{60%,100%{transform:translateX(100%)}}
+.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:8px 12px;font:600 13px Inter;cursor:pointer}
+.ghost:hover{background:rgba(255,255,255,.12)}
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.toggle:last-child{border:0}
+.sw{appearance:none;-webkit-appearance:none;width:42px;height:24px;border-radius:99px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;padding:0;border:0;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+.sw:checked{background:var(--a1)}.sw:checked::after{left:21px}
+.out{min-height:420px;display:flex;flex-direction:column}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tile{position:relative;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.4);border:1px solid var(--line);animation:pop .4s ease}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
+.tile img,.tile video{display:block;width:100%;height:auto}
+.tile .bar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,.85));opacity:0;transition:.2s}
+.tile:hover .bar,.tile:focus-within .bar{opacity:1}
+@media(hover:none){.tile .bar{opacity:1}}
+.skeleton{aspect-ratio:var(--ar,1);background:linear-gradient(100deg,rgba(255,255,255,.03) 30%,rgba(255,255,255,.09),rgba(255,255,255,.03) 70%);background-size:300% 100%;animation:sk 1.4s infinite;display:grid;place-items:center;color:var(--mute);font-size:13px}
+@keyframes sk{to{background-position:-150% 0}}
+.empty{flex:1;display:grid;place-items:center;text-align:center;color:var(--mute);padding:40px}
+.empty b{display:block;font:700 22px 'Space Grotesk';color:var(--text);margin-bottom:6px}
+.stage{position:relative;border-radius:14px;overflow:hidden;background:#000;border:1px solid var(--line)}
+.stage canvas,.stage video{display:block;width:100%;height:auto}
+.prog{height:6px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;width:0;background:var(--grad);transition:width .3s}
+.status{font-size:13px;color:var(--mute);margin-top:8px;min-height:18px}
+.seg{display:flex;background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:none;color:var(--mute);padding:10px 6px;border-radius:9px;font:600 13px Inter;cursor:pointer}
+.seg button.on{background:rgba(255,255,255,.1);color:#fff}
+.note{font-size:13px;color:var(--mute);line-height:1.55;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.18);border-radius:12px;padding:12px;margin-top:12px}
+.note a{color:#67e8f9}
+.hide{display:none!important}
+.thumbs{display:flex;gap:8px;overflow-x:auto;margin-top:12px}
+.thumbs img{height:64px;border-radius:8px;border:1px solid var(--line)}
+.err{color:#fda4af}
+small.k{color:var(--mute);font-size:12px}
+</style>
+</head>
+<body>
+<div class="aurora"><i></i><i></i><i></i></div>
+<div class="wrap">
+  <header>
+    <div class="logo">Dream<span>Forge</span></div>
+    <div class="badge">● Free · No sign-up · No payments</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="image">🎨 Image</button>
+    <button class="tab" data-tab="video">🎬 Video</button>
+    <button class="tab" data-tab="gallery">🗂 Gallery</button>
+    <button class="tab" data-tab="settings">⚙️ Settings</button>
+  </nav>
+
+  <!-- IMAGE -->
+  <section id="tab-image" class="grid">
+    <div class="card">
+      <h2>Describe your image</h2>
+      <textarea id="iPrompt" placeholder="A neon-lit samurai cat standing in rainy Tokyo at night, reflections on wet pavement"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="ghost" id="iEnhance">✨ Enhance prompt</button>
+        <button class="ghost" id="iSurprise">🎲 Surprise me</button>
+      </div>
+      <label>Style</label>
+      <div class="chips" id="iStyles"></div>
+      <div class="row">
+        <div><label>Model</label><select id="iModel"></select></div>
+        <div><label>Shape</label><select id="iAspect">
+          <option value="1:1">Square 1:1</option><option value="16:9">Wide 16:9</option>
+          <option value="9:16">Phone 9:16</option><option value="4:5">Portrait 4:5</option><option value="3:2">Photo 3:2</option>
+        </select></div>
+      </div>
+      <div class="row">
+        <div><label>How many</label><select id="iCount"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+        <div><label>Seed (blank = random)</label><input id="iSeed" inputmode="numeric" placeholder="random"></div>
+      </div>
+      <label>Avoid (negative prompt)</label>
+      <input id="iNeg" placeholder="blurry, text, watermark, extra fingers">
+      <button class="btn" id="iGo">Generate</button>
+    </div>
+    <div class="card out">
+      <h2>Results</h2>
+      <div id="iOut" class="results"></div>
+      <div id="iEmpty" class="empty"><div><b>Your creations appear here</b>Type an idea and press Generate.</div></div>
+    </div>
+  </section>
+
+  <!-- VIDEO -->
+  <section id="tab-video" class="grid hide">
+    <div class="card">
+      <h2>Make a video</h2>
+      <div class="seg" id="vMode">
+        <button data-m="free" class="on">Free Motion</button>
+        <button data-m="ai">True AI Video</button>
+      </div>
+      <p class="note" id="vModeNote"></p>
+      <label>Idea or storyboard</label>
+      <textarea id="vPrompt" placeholder="A lone astronaut discovers a glowing forest on an alien planet&#10;&#10;Tip (Free Motion): put one scene per line for a story."></textarea>
+      <label>Style</label>
+      <div class="chips" id="vStyles"></div>
+
+      <div id="freeOpts">
+        <div class="row">
+          <div><label>Scenes</label><select id="vScenes"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>8</option></select></div>
+          <div><label>Sec / scene</label><select id="vSec"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+        </div>
+        <div class="row">
+          <div><label>Shape</label><select id="vAspect"><option value="16:9">Wide 16:9</option><option value="9:16">Phone 9:16</option><option value="1:1">Square 1:1</option></select></div>
+          <div><label>Image model</label><select id="vImgModel"></select></div>
+        </div>
+        <label>Title text on video (optional)</label>
+        <input id="vTitle" placeholder="e.g. THE GLOWING FOREST">
+        <div style="margin-top:10px">
+          <div class="toggle">Cinematic bars & vignette <input type="checkbox" class="sw" id="vCine" checked></div>
+          <div class="toggle">Film grain <input type="checkbox" class="sw" id="vGrain" checked></div>
+          <div class="toggle">Color glow grade <input type="checkbox" class="sw" id="vGlow"></div>
+        </div>
+        <label>Or animate your own photo</label>
+        <input type="file" id="vUpload" accept="image/*">
+      </div>
+
+      <div id="aiOpts" class="hide">
+        <div class="row">
+          <div><label>Video model</label><select id="vAiModel"></select></div>
+          <div><label>Length (sec)</label><select id="vDur"><option>4</option><option selected>5</option><option>6</option><option>8</option></select></div>
+        </div>
+        <label>Shape</label>
+        <select id="vAiAspect"><option value="16:9">Wide 16:9</option><option value="9:16">Phone 9:16</option></select>
+        <label>Start from image URL (optional)</label>
+        <input id="vStartImg" placeholder="Paste an image link, or use 'Animate' in Gallery">
+      </div>
+
+      <button class="btn" id="vGo">Create video</button>
+    </div>
+    <div class="card out">
+      <h2>Preview</h2>
+      <div id="vStageWrap" class="hide">
+        <div class="stage"><canvas id="vCanvas" class="hide"></canvas><video id="vVideo" class="hide" controls playsinline loop></video></div>
+        <div class="prog"><i id="vProg"></i></div>
+        <div class="status" id="vStatus"></div>
+        <div class="thumbs" id="vThumbs"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="ghost hide" id="vDl">⬇ Download video</button>
+          <button class="ghost hide" id="vReplay">↻ Re-render with new motion</button>
+        </div>
+      </div>
+      <div id="vEmpty" class="empty"><div><b>Lights, camera…</b>Describe a scene and press Create video.</div></div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="tab-gallery" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center"><h2>Your gallery</h2><button class="ghost" id="gClear">Clear all</button></div>
+      <p class="status">Images are saved in this browser. Videos aren't saved — download them after making them.</p>
+      <div id="gOut" class="results" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" class="hide">
+    <div class="card" style="max-width:640px">
+      <h2>Settings</h2>
+      <label>Pollinations key (optional, free)</label>
+      <input id="sKey" placeholder="pk_... (leave blank to use the keyless free mode)">
+      <p class="note">Everything works with <b>no key</b> except <b>True AI Video</b> and some premium image models.
+      A key is free at <a href="https://enter.pollinations.ai" target="_blank" rel="noopener">enter.pollinations.ai</a> — use a <b>publishable</b> key (starts with <code>pk_</code>), never a secret <code>sk_</code> key. Free keys get a daily allowance; you never have to add a card.</p>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="ghost" id="sSave">Save</button><button class="ghost" id="sReload">Reload models</button></div>
+      <p class="status" id="sStatus"></p>
+      <h2 style="margin-top:22px">About</h2>
+      <p class="status" style="line-height:1.6">Images and video come from the open-source <a style="color:#67e8f9" href="https://pollinations.ai" target="_blank" rel="noopener">Pollinations.ai</a> service. DreamForge has no accounts, no ads, and no payments.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('df_'+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k, v){ try{ localStorage.setItem('df_'+k, JSON.stringify(v)); }catch(e){} }
+};
+let KEY = store.get('key','');
+
+/* ---------- styles ---------- */
+const STYLES = {
+  'None':'',
+  'Cinematic':'cinematic film still, dramatic lighting, anamorphic lens, shallow depth of field, color graded, 8k',
+  'Photoreal':'ultra realistic photograph, 50mm, natural light, high detail, sharp focus',
+  'Anime':'anime style, studio quality, vibrant colors, detailed background, cel shading',
+  '3D Render':'3d render, octane, pixar-like lighting, soft global illumination, highly detailed',
+  'Fantasy Art':'epic fantasy digital painting, artstation trending, intricate, luminous',
+  'Cyberpunk':'cyberpunk, neon lights, rain, blade runner atmosphere, volumetric fog',
+  'Watercolor':'delicate watercolor painting, soft washes, paper texture',
+  'Pixel Art':'detailed pixel art, 16-bit, crisp pixels',
+  'Comic':'bold comic book art, ink lines, halftone, dynamic'
+};
+function chipGroup(el, key){
+  let cur = store.get(key,'Cinematic');
+  el.innerHTML='';
+  Object.keys(STYLES).forEach(n=>{
+    const b=document.createElement('button'); b.className='chip'+(n===cur?' on':''); b.textContent=n;
+    b.onclick=()=>{cur=n;store.set(key,n);[...el.children].forEach(c=>c.classList.toggle('on',c===b));};
+    el.appendChild(b);
+  });
+  return ()=>STYLES[cur]||'';
+}
+const iStyle = chipGroup($('#iStyles'),'istyle');
+const vStyle = chipGroup($('#vStyles'),'vstyle');
+
+/* ---------- tabs ---------- */
+$$('.tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
+function showTab(n){
+  $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===n));
+  ['image','video','gallery','settings'].forEach(x=>$('#tab-'+x).classList.toggle('hide',x!==n));
+  if(n==='gallery') renderGallery();
+}
+
+/* ---------- models ---------- */
+const FALLBACK_IMG = ['flux','turbo'];
+const FALLBACK_IMG_KEY = ['flux','turbo','kontext','seedream','gptimage'];
+const FALLBACK_VID = ['seedance','veo','wan-fast','ltx-2'];
+function fillSelect(sel, list, saved){
+  sel.innerHTML = list.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(saved && list.includes(saved)) sel.value=saved;
+}
+async function loadModels(){
+  let img = KEY?FALLBACK_IMG_KEY:FALLBACK_IMG, vid = FALLBACK_VID;
+  try{
+    const url = KEY ? 'https://gen.pollinations.ai/image/models' : 'https://image.pollinations.ai/models';
+    const r = await fetch(url, KEY?{headers:{Authorization:'Bearer '+KEY}}:{});
+    if(r.ok){
+      const j = await r.json();
+      if(Array.isArray(j) && j.length){
+        const im=[], vi=[];
+        j.forEach(m=>{
+          const name = typeof m==='string'?m:(m.name||m.id);
+          if(!name) return;
+          const outs = (m && (m.output_modalities||m.outputs||[])) || [];
+          const isVid = (Array.isArray(outs)&&outs.includes('video')) || m.type==='video';
+          (isVid?vi:im).push(name);
+        });
+        if(im.length) img=im;
+        if(vi.length) vid=vi;
+      }
+    }
+  }catch(e){}
+  fillSelect($('#iModel'), img, store.get('imodel','flux'));
+  fillSelect($('#vImgModel'), img, store.get('vimodel','flux'));
+  fillSelect($('#vAiModel'), vid, store.get('vaimodel','seedance'));
+}
+$('#iModel').onchange=e=>store.set('imodel',e.target.value);
+$('#vImgModel').onchange=e=>store.set('vimodel',e.target.value);
+$('#vAiModel').onchange=e=>store.set('vaimodel',e.target.value);
+
+/* ---------- helpers ---------- */
+const DIMS = {'1:1':[1024,1024],'16:9':[1280,720],'9:16':[720,1280],'4:5':[896,1120],'3:2':[1152,768]};
+const rnd = () => Math.floor(Math.random()*2e9);
+function imageURL(prompt, {model='flux', w=1024, h=1024, seed=rnd(), neg=''}={}){
+  const p = new URLSearchParams({model, width:w, height:h, seed, nologo:'true', private:'true'});
+  if(neg) p.set('negative_prompt', neg);
+  if(KEY){ p.set('key', KEY); return 'https://gen.pollinations.ai/image/'+encodeURIComponent(prompt)+'?'+p; }
+  return 'https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?'+p;
+}
+function loadImg(src, timeout=120000){
+  return new Promise((res,rej)=>{
+    const im=new Image(); im.crossOrigin='anonymous'; im.decoding='async';
+    const t=setTimeout(()=>{im.src='';rej(new Error('timeout'));},timeout);
+    im.onload=()=>{clearTimeout(t);res(im);}; im.onerror=()=>{clearTimeout(t);rej(new Error('load failed'));};
+    im.src=src;
+  });
+}
+async function loadImgRetry(src, tries=3){
+  for(let i=0;i<tries;i++){
+    try{ return await loadImg(i? src+'&r='+i : src); }catch(e){ if(i===tries-1) throw e; await new Promise(r=>setTimeout(r,2500*(i+1))); }
+  }
+}
+async function saveFile(url, name){
+  try{
+    const b = url.startsWith('blob:') ? await (await fetch(url)).blob() : await (await fetch(url)).blob();
+    const u = URL.createObjectURL(b); const a=document.createElement('a');
+    a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),4000);
+  }catch(e){ window.open(url,'_blank'); }
+}
+
+/* ---------- prompt enhance ---------- */
+const SURPRISE = ['a floating island city at sunrise with waterfalls pouring into clouds','a fox made of stained glass in a misty forest','an underwater cathedral lit by bioluminescent jellyfish','a retro-futuristic diner on Mars, 1950s style','a giant ancient turtle carrying a village through the desert','a dragon curled around a lighthouse during a thunderstorm','a cozy treehouse library glowing at night in the snow'];
+$('#iSurprise').onclick=()=>{$('#iPrompt').value=SURPRISE[Math.floor(Math.random()*SURPRISE.length)];};
+async function enhance(el, btn){
+  const t = el.value.trim(); if(!t) return;
+  const old=btn.textContent; btn.textContent='✨ Enhancing…'; btn.disabled=true;
+  const sys='Rewrite this as one vivid, detailed AI image prompt (subject, setting, lighting, camera, mood). Reply with only the prompt, under 70 words: ';
+  try{
+    const url = KEY ? 'https://gen.pollinations.ai/text/'+encodeURIComponent(sys+t)+'?key='+encodeURIComponent(KEY)
+                    : 'https://text.pollinations.ai/'+encodeURIComponent(sys+t)+'?model=openai';
+    const r = await fetch(url); if(!r.ok) throw 0;
+    const out=(await r.text()).trim().replace(/^"|"$/g,'');
+    if(out && out.length<900) el.value=out; else throw 0;
+  }catch(e){ el.value = t+', highly detailed, dramatic lighting, rich color, masterpiece composition'; }
+  btn.textContent=old; btn.disabled=false;
+}
+$('#iEnhance').onclick=()=>enhance($('#iPrompt'),$('#iEnhance'));
+
+/* ---------- gallery ---------- */
+let gallery = store.get('gallery',[]);
+function addGallery(item){ gallery.unshift(item); gallery=gallery.slice(0,120); store.set('gallery',gallery); }
+function tile(item, opts={}){
+  const d=document.createElement('div'); d.className='tile';
+  const media = item.type==='video' ? Object.assign(document.createElement('video'),{src:item.url,controls:true,loop:true,playsInline:true,muted:true,autoplay:true})
+                                     : Object.assign(document.createElement('img'),{src:item.url,alt:item.prompt,loading:'lazy',crossOrigin:'anonymous'});
+  d.appendChild(media);
+  const bar=document.createElement('div'); bar.className='bar';
+  const dl=Object.assign(document.createElement('button'),{className:'ghost',textContent:'⬇ Save'});
+  dl.onclick=()=>saveFile(item.url,'dreamforge-'+Date.now()+(item.type==='video'?'.'+(item.ext||'webm'):'.jpg'));
+  bar.appendChild(dl);
+  if(item.type!=='video'){
+    const an=Object.assign(document.createElement('button'),{className:'ghost',textContent:'🎬 Animate'});
+    an.onclick=()=>animateFrom(item);
+    bar.appendChild(an);
+  }
+  if(opts.remove){ const rm=Object.assign(document.createElement('button'),{className:'ghost',textContent:'✕'}); rm.onclick=()=>{gallery=gallery.filter(g=>g!==item);store.set('gallery',gallery);renderGallery();}; bar.appendChild(rm); }
+  d.appendChild(bar); return d;
+}
+function renderGallery(){
+  const o=$('#gOut'); o.innerHTML='';
+  if(!gallery.length){ o.innerHTML='<div class="empty" style="grid-column:1/-1"><div><b>Nothing yet</b>Generated images will collect here.</div></div>'; return; }
+  gallery.forEach(g=>o.appendChild(tile(g,{remove:true})));
+}
+$('#gClear').onclick=()=>{gallery=[];store.set('gallery',gallery);renderGallery();};
+
+/* ---------- IMAGE generation ---------- */
+$('#iGo').onclick=async()=>{
+  const base=$('#iPrompt').value.trim(); if(!base){$('#iPrompt').focus();return;}
+  const prompt=[base, iStyle()].filter(Boolean).join(', ');
+  const [w,h]=DIMS[$('#iAspect').value]; const n=+$('#iCount').value;
+  const seed0 = $('#iSeed').value.trim()? +$('#iSeed').value : rnd();
+  const model=$('#iModel').value, neg=$('#iNeg').value.trim();
+  $('#iEmpty').classList.add('hide'); const out=$('#iOut'); const btn=$('#iGo'); btn.disabled=true; btn.textContent='Generating…';
+  const slots=[];
+  for(let i=0;i<n;i++){ const s=document.createElement('div'); s.className='tile'; s.innerHTML=`<div class="skeleton" style="--ar:${w}/${h}">Painting pixels…</div>`; out.prepend(s); slots.push(s); }
+  for(let i=0;i<n;i++){ // sequential = friendlier to free rate limits
+    const url=imageURL(prompt,{model,w,h,seed:seed0+i,neg});
+    try{ await loadImgRetry(url); const item={type:'image',url,prompt:base,model,t:Date.now()}; addGallery(item); slots[i].replaceWith(tile(item)); }
+    catch(e){ slots[i].innerHTML='<div class="skeleton err" style="--ar:'+w+'/'+h+';animation:none">Busy — try again in a moment</div>'; }
+  }
+  btn.disabled=false; btn.textContent='Generate';
+};
+
+/* ---------- VIDEO ---------- */
+let vMode='free';
+const NOTES={
+  free:'<b>Free & unlimited.</b> AI paints each scene, then DreamForge animates them with smooth camera moves, transitions and film effects, and records a real video file — no key needed.',
+  ai:'<b>Real AI-generated motion</b> (Seedance, Veo, Wan, LTX). Needs a free Pollinations key in Settings — no payment, but there\'s a daily free allowance.'
+};
+function setMode(m){ vMode=m; $$('#vMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===m)); $('#freeOpts').classList.toggle('hide',m!=='free'); $('#aiOpts').classList.toggle('hide',m!=='ai'); $('#vModeNote').innerHTML=NOTES[m]; }
+$$('#vMode button').forEach(b=>b.onclick=()=>setMode(b.dataset.m)); setMode('free');
+
+const cv=$('#vCanvas'), ctx=cv.getContext('2d'), vid=$('#vVideo');
+let lastFrames=null, lastBlobURL=null, lastExt='webm';
+function vStatus(t,p){ $('#vStatus').innerHTML=t; if(p!=null) $('#vProg').style.width=Math.round(p*100)+'%'; }
+function showStage(){ $('#vEmpty').classList.add('hide'); $('#vStageWrap').classList.remove('hide'); }
+
+const SHOTS=['wide establishing shot','medium shot','close-up detail shot','low angle dramatic shot','over-the-shoulder shot','aerial view','tracking shot','final wide shot, epic finale'];
+function buildScenes(text, n){
+  const lines=text.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(lines.length>1) return lines.slice(0,8);
+  return Array.from({length:n},(_,i)=>`${text}, ${SHOTS[i%SHOTS.length]}`);
+}
+const MOVES=['zoomIn','zoomOut','panL','panR','panUp','diag'];
+function drawFrame(img, p, move, W, H, alpha){
+  const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2; // ease
+  const base=Math.max(W/img.width,H/img.height);
+  let s=1.12, dx=0, dy=0;
+  switch(move){
+    case 'zoomIn': s=1.04+.16*e; break;
+    case 'zoomOut': s=1.22-.16*e; break;
+    case 'panL': s=1.18; dx=(.5-e)*.12; break;
+    case 'panR': s=1.18; dx=(e-.5)*.12; break;
+    case 'panUp': s=1.18; dy=(.5-e)*.12; break;
+    case 'diag': s=1.08+.12*e; dx=(e-.5)*.08; dy=(e-.5)*.06; break;
+  }
+  const w=img.width*base*s, h=img.height*base*s;
+  ctx.globalAlpha=alpha;
+  ctx.drawImage(img,(W-w)/2+dx*W,(H-h)/2+dy*H,w,h);
+  ctx.globalAlpha=1;
+}
+let grainCanvas=null;
+function makeGrain(W,H){
+  const g=document.createElement('canvas'); g.width=W/2|0; g.height=H/2|0; const gc=g.getContext('2d');
+  const d=gc.createImageData(g.width,g.height);
+  for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=22;}
+  gc.putImageData(d,0,0); return g;
+}
+function overlays(W,H,t,total,opt){
+  if(opt.glow){ ctx.globalCompositeOperation='soft-light'; const gr=ctx.createLinearGradient(0,0,W,H); gr.addColorStop(0,'rgba(255,120,60,.35)'); gr.addColorStop(1,'rgba(40,120,255,.35)'); ctx.fillStyle=gr; ctx.fillRect(0,0,W,H); ctx.globalCompositeOperation='source-over'; }
+  if(opt.grain && grainCanvas){ const ox=Math.random()*-40, oy=Math.random()*-40; ctx.drawImage(grainCanvas,ox,oy,W+40,H+40); }
+  if(opt.cine){
+    const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.6)'); ctx.fillStyle=v; ctx.fillRect(0,0,W,H);
+    if(W>H){ const b=H*.075; ctx.fillStyle='#000'; ctx.fillRect(0,0,W,b); ctx.fillRect(0,H-b,W,b); }
+  }
+  if(opt.title){
+    const a = t<.4?t/.4 : t<2.6?1 : t<3.2?1-(t-2.6)/.6 : 0;
+    if(a>0){ ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      const fs=Math.round(Math.min(W,H)*.075); ctx.font=`700 ${fs}px "Space Grotesk", sans-serif`;
+      ctx.shadowColor='rgba(0,0,0,.7)'; ctx.shadowBlur=24; ctx.letterSpacing='4px';
+      ctx.fillText(opt.title.toUpperCase(),W/2,H/2); ctx.restore(); }
+  }
+  // fade in/out
+  const f = t<.5 ? 1-t/.5 : t>total-.6 ? (t-(total-.6))/.6 : 0;
+  if(f>0){ ctx.fillStyle=`rgba(0,0,0,${f})`; ctx.fillRect(0,0,W,H); }
+}
+function pickMime(){
+  const c=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  for(const m of c){ if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m; }
+  return '';
+}
+async function renderMotion(frames, opt){
+  const [W,H] = opt.aspect==='9:16'?[720,1280]:opt.aspect==='1:1'?[1080,1080]:[1280,720];
+  cv.width=W; cv.height=H; grainCanvas=opt.grain?makeGrain(W,H):null;
+  cv.classList.remove('hide'); vid.classList.add('hide'); $('#vDl').classList.add('hide');
+  const moves=frames.map(()=>MOVES[Math.floor(Math.random()*MOVES.length)]);
+  const sd=opt.sec, tr=.8, total=frames.length*sd;
+  const mime=pickMime(); let rec=null, chunks=[];
+  try{
+    const stream=cv.captureStream(30);
+    rec=new MediaRecorder(stream, mime?{mimeType:mime,videoBitsPerSecond:8e6}:{videoBitsPerSecond:8e6});
+    rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  }catch(e){ rec=null; }
+  return new Promise(resolve=>{
+    let start=null;
+    if(rec) rec.start(250);
+    const step=ts=>{
+      if(start==null) start=ts;
+      const t=(ts-start)/1000;
+      ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+      const i=Math.min(frames.length-1,Math.floor(t/sd));
+      const local=(t-i*sd)/(sd+tr);
+      drawFrame(frames[i], Math.min(1,local), moves[i], W,H,1);
+      const into=t-i*sd;
+      if(i<frames.length-1 && into>sd-tr){ // crossfade into next
+        const a=(into-(sd-tr))/tr;
+        drawFrame(frames[i+1], a*tr/(sd+tr), moves[i+1], W,H,a);
+      }
+      overlays(W,H,t,total,opt);
+      vStatus(rec?'🎥 Recording your video… '+Math.min(total,t).toFixed(1)+'s / '+total+'s':'Previewing (this browser can\'t record video)', .5+.5*Math.min(1,t/total));
+      if(t<total) requestAnimationFrame(step);
+      else if(rec){ rec.onstop=()=>{ const type=rec.mimeType||mime||'video/webm'; const blob=new Blob(chunks,{type}); resolve({blob,ext:type.includes('mp4')?'mp4':'webm'}); }; rec.stop(); }
+      else resolve(null);
+    };
+    requestAnimationFrame(step);
+  });
+}
+function finishVideo(res){
+  if(!res){ vStatus('Done. Your browser can preview but not record — try Chrome or Safari 17+.',1); return; }
+  if(lastBlobURL) URL.revokeObjectURL(lastBlobURL);
+  lastBlobURL=URL.createObjectURL(res.blob); lastExt=res.ext;
+  vid.src=lastBlobURL; vid.classList.remove('hide'); cv.classList.add('hide'); vid.play().catch(()=>{});
+  $('#vDl').classList.remove('hide'); $('#vReplay').classList.toggle('hide',!lastFrames);
+  vStatus('✅ Video ready — '+(res.blob.size/1048576).toFixed(1)+' MB '+res.ext.toUpperCase(),1);
+}
+function freeOpts(){ return {aspect:$('#vAspect').value, sec:+$('#vSec').value, cine:$('#vCine').checked, grain:$('#vGrain').checked, glow:$('#vGlow').checked, title:$('#vTitle').value.trim()}; }
+
+async function runFree(){
+  const text=$('#vPrompt').value.trim(); const up=$('#vUpload').files[0];
+  if(!text && !up){ $('#vPrompt').focus(); return; }
+  showStage(); const opt=freeOpts(); const [w,h]=DIMS[opt.aspect]; const style=vStyle();
+  const thumbs=$('#vThumbs'); thumbs.innerHTML=''; let frames=[];
+  if(up && !text){
+    const im=await loadImg(URL.createObjectURL(up)); frames=[im,im,im].slice(0,Math.max(1,Math.round(9/opt.sec)));
+  }else{
+    const scenes=buildScenes(text, +$('#vScenes').value); const seed=rnd(); const model=$('#vImgModel').value;
+    if(up){ frames.push(await loadImg(URL.createObjectURL(up))); }
+    for(let i=0;i<scenes.length;i++){
+      vStatus(`🎨 Painting scene ${i+1} of ${scenes.length}…`, .5*i/scenes.length);
+      const url=imageURL([scenes[i],style,'consistent characters and art style'].filter(Boolean).join(', '),{model,w,h,seed:seed+i});
+      try{ const im=await loadImgRetry(url); frames.push(im); const t=im.cloneNode(); thumbs.appendChild(t); addGallery({type:'image',url,prompt:scenes[i],model,t:Date.now()}); }
+      catch(e){ vStatus(`Scene ${i+1} timed out, skipping…`); }
+    }
+  }
+  if(!frames.length){ vStatus('<span class="err">The free image server is busy. Wait a minute and try again.</span>',0); return; }
+  lastFrames=frames;
+  finishVideo(await renderMotion(frames,opt));
+}
+
+async function runAI(){
+  const text=$('#vPrompt').value.trim(); if(!text){ $('#vPrompt').focus(); return; }
+  showStage(); cv.classList.add('hide'); vid.classList.add('hide'); $('#vThumbs').innerHTML=''; $('#vDl').classList.add('hide'); $('#vReplay').classList.add('hide');
+  if(!KEY){ vStatus('<span class="err">True AI Video needs a free key. Open Settings → paste a pk_ key from enter.pollinations.ai (no payment needed). Or use Free Motion — no key at all.</span>',0); return; }
+  const prompt=[text,vStyle()].filter(Boolean).join(', ');
+  const p=new URLSearchParams({model:$('#vAiModel').value, duration:$('#vDur').value, aspectRatio:$('#vAiAspect').value, nologo:'true', private:'true', seed:rnd()});
+  const si=$('#vStartImg').value.trim(); if(si) p.set('image',si);
+  let pct=0; const tick=setInterval(()=>{pct=Math.min(.95,pct+.008);vStatus('🎬 AI is filming your scene… this can take 1–3 minutes',pct);},1000);
+  try{
+    let blob=null, errTxt='';
+    for(const path of ['video','image']){
+      const r=await fetch(`https://gen.pollinations.ai/${path}/${encodeURIComponent(prompt)}?${p}`,{headers:{Authorization:'Bearer '+KEY}});
+      const ct=r.headers.get('content-type')||'';
+      if(r.ok && ct.startsWith('video')){ blob=await r.blob(); break; }
+      errTxt = r.status+' '+(await r.text().catch(()=>'')).slice(0,220);
+      if(r.status!==404 && r.status!==400) break;
+    }
+    clearInterval(tick);
+    if(!blob) throw new Error(errTxt||'No video returned');
+    lastFrames=null; finishVideo({blob,ext:(blob.type.includes('webm')?'webm':'mp4')});
+  }catch(e){
+    clearInterval(tick);
+    vStatus('<span class="err">Couldn\'t make the AI video: '+String(e.message).replace(/</g,'&lt;')+'<br>Your free daily allowance may be used up, or the model is busy. Try another model, or use Free Motion (unlimited).</span>',0);
+  }
+}
+$('#vGo').onclick=async()=>{ const b=$('#vGo'); b.disabled=true; b.textContent='Working…'; try{ vMode==='free'?await runFree():await runAI(); }catch(e){ vStatus('<span class="err">Something went wrong: '+e.message+'</span>'); } b.disabled=false; b.textContent='Create video'; };
+$('#vReplay').onclick=async()=>{ if(!lastFrames) return; finishVideo(await renderMotion(lastFrames,freeOpts())); };
+$('#vDl').onclick=()=>{ if(lastBlobURL) saveFile(lastBlobURL,'dreamforge-'+Date.now()+'.'+lastExt); };
+$('#vUpload').onchange=()=>{};
+function animateFrom(item){
+  showTab('video');
+  if(vMode==='ai'){ $('#vStartImg').value=item.url; }
+  $('#vPrompt').value=item.prompt||'';
+  if(vMode==='free'){ loadImg(item.url).then(im=>{ showStage(); lastFrames=[im]; $('#vThumbs').innerHTML=''; $('#vThumbs').appendChild(im.cloneNode()); renderMotion([im,im],freeOpts()).then(finishVideo); }); }
+}
+
+/* ---------- settings ---------- */
+$('#sKey').value=KEY;
+$('#sSave').onclick=()=>{
+  const k=$('#sKey').value.trim();
+  if(k.startsWith('sk_')){ $('#sStatus').innerHTML='<span class="err">That\'s a secret key — don\'t put it in a website. Create a publishable pk_ key instead.</span>'; return; }
+  KEY=k; store.set('key',k); $('#sStatus').textContent=k?'Saved. Premium models unlocked.':'Key removed — using keyless free mode.'; loadModels();
+};
+$('#sReload').onclick=()=>{ loadModels(); $('#sStatus').textContent='Models refreshed.'; };
+
+loadModels();
+})();
+</script>
+</body>
+</html>
